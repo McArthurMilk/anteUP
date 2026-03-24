@@ -143,9 +143,7 @@ const hash = await bcrypt.hash(password, rounds);
 await bcrypt.compare(plaintext, hash);
 ```
 
-`rounds` controls the cost factor — how long hashing takes. Higher = slower = harder to brute force. See [bcrypt rounds](https://github.com/kelektiv/node.bcrypt.js#a-note-on-rounds).
-
-We always run `bcrypt.compare` even when a user is not found, to prevent [timing attacks](https://en.wikipedia.org/wiki/Timing_attack).
+`rounds` controls the cost factor — how long hashing takes. Higher = slower = harder to brute force. At 12 rounds, a single hash takes ~250ms. See [bcrypt rounds](https://github.com/kelektiv/node.bcrypt.js#a-note-on-rounds).
 
 ### JSON Web Tokens (Access Tokens)
 

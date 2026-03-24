@@ -100,15 +100,26 @@ router.post('/login', async (req: Request, res: Response) => {
     const user = rows[0] ?? null;
 
     /**
-     * NOTE: Timing Attack Mitigation
-     * We use a "fake" hash if the user doesn't exist so that bcrypt.compare
-     * takes the same amount of time regardless of whether the email is valid.
+     * NOTE: Why are we hashing if the user isn't found?
+     *
+     * If we returned early when no user is found, an attacker could measure
+     * response times to determine whether an email is registered.
+     * By always running bcrypt.compare against a dummy hash, both branches take roughly the same time.
+     *
+     * This is a partial mitigation. bcrypt timing varies slightly run to run,
+     * and enumeration is often possible through other vectors (registration,
+     * password reset). Rate limiting auth routes is a better approach.
+     *
+     * The above is also a trade off and can be a UX decision (ever been annoyed by "Invalid username or password"?)
+     *
+     * Read more here https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
      */
+
     const hash = user?.password_hash ?? '$2b$12$invalidhashfortimingpurposes00000000000';
     const match = await bcrypt.compare(password, hash);
 
     if (!user || !match) {
-      res.status(401).json({ error: 'Invalid email or password' });
+      res.status(401).json({ error: 'Invalid email or password' }); // See above
       return;
     }
 
@@ -121,6 +132,7 @@ router.post('/login', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 // POST /api/auth/refresh
 router.post('/refresh', async (req: Request, res: Response) => {
   const result = refreshSchema.safeParse(req.body);
