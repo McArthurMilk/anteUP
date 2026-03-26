@@ -25,10 +25,15 @@ export async function migrate(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
-      CREATE INDEX IF NOT EXISTS refresh_tokens_token_idx ON refresh_tokens(token);
-      CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens(user_id);
+      ALTER TABLE refresh_tokens
+        ADD COLUMN IF NOT EXISTS family_id UUID NOT NULL DEFAULT gen_random_uuid(),
+        ADD COLUMN IF NOT EXISTS consumed_at TIMESTAMPTZ;
+
+      CREATE INDEX IF NOT EXISTS refresh_tokens_token_idx     ON refresh_tokens(token);
+      CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx   ON refresh_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS refresh_tokens_family_id_idx ON refresh_tokens(family_id);
     `);
-    console.log('✅ Migrations complete');
+    console.log('Migrations complete');
   } finally {
     client.release();
   }

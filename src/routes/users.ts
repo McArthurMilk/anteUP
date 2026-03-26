@@ -9,8 +9,13 @@ const router = Router();
 router.use(authenticate);
 
 // GET /api/users/me
-router.get('/me', (req: Request, res: Response) => {
-  res.json({ user: req.user });
+router.get('/me', async (req: Request, res: Response) => {
+  const { rows } = await pool.query<User>('SELECT * FROM users WHERE id = $1', [req.user?.sub]);
+  if (!rows[0]) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+  res.json({ user: toPublicUser(rows[0]) });
 });
 
 // GET /api/users
